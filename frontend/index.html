@@ -1,74 +1,267 @@
 <!DOCTYPE html>
-apiBaseInput.addEventListener('change', () => { persistAPIBase(apiBaseInput.value.trim()); location.href = apiBaseInput.value ? ('?api=' + encodeURIComponent(apiBaseInput.value)) : location.pathname; });
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pozez JCC Community Lap Tracker</title>
+  <meta name="description" content="Track laps for the J-Fit Aquatics monthly swimming challenge." />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Maisen Neu Demi', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #00A4DB 0%, #2F7DE1 50%, #00A4DB 100%); min-height: 100vh; padding: 20px; }
+    .container { max-width: 1200px; margin: 0 auto; background: rgba(255, 255, 255, 0.98); border-radius: 15px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15); overflow: hidden; }
+    .header { background: linear-gradient(135deg, #00A4DB 0%, #2F7DE1 100%); color: white; padding: 30px; text-align: center; position: relative; overflow: hidden; }
+    .header::before { content: ''; position: absolute; inset: 0; background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 100" fill="rgba(255,255,255,0.1)"><path d="M0,0 Q250,100 500,50 T1000,25 L1000,100 L0,100 Z"/></svg>') no-repeat bottom; background-size: cover; }
+    .header-content { position: relative; z-index: 1; }
+    .jcc-logo { font-size: 1.2rem; font-weight: 300; margin-bottom: 5px; opacity: 0.9; }
+    .header h1 { font-family: 'Trade Gothic', 'Arial Black', sans-serif; font-size: 2.5rem; margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+    .header p { font-size: 1.2rem; opacity: 0.9; font-weight: 300; }
+    .stats-bar { background: linear-gradient(135deg, #00A4A9 0%, #2F7DE1 100%); color: white; padding: 20px 30px; display: flex; justify-content: center; align-items: center; gap: 60px; flex-wrap: wrap; }
+    .stat-item { text-align: center; }
+    .stat-number { font-size: 2.5rem; font-weight: 700; color: #00A4DB; line-height: 1; }
+    .stat-label { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; margin-top: 5px; }
+    .content { display: grid; grid-template-columns: 1fr 2fr; gap: 30px; padding: 30px; }
+    .form-section { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0, 164, 219, 0.1); height: fit-content; border: 1px solid rgba(0, 164, 219, 0.1); }
+    .form-section h2 { color: #00A4DB; margin-bottom: 10px; font-size: 1.5rem; font-weight: 600; font-family: 'Trade Gothic', 'Arial Black', sans-serif; text-transform: uppercase; letter-spacing: 0.5px; }
+    .tools { display:flex; gap:8px; align-items:center; margin: 10px 0 20px; flex-wrap: wrap; }
+    .tools small { color:#6b7280 }
+    .form-group { margin-bottom: 20px; }
+    label { display: block; margin-bottom: 8px; font-weight: 600; color: #374151; }
+    input[type="text"], input[type="number"], input[type="date"], input[type="url"], input[type="password"] { width: 100%; padding: 12px 15px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 16px; transition: all 0.3s ease; background: #fafafa; }
+    input:focus { outline: none; border-color: #00A4DB; box-shadow: 0 0 0 3px rgba(0, 164, 219, 0.1); background: white; }
+    .submit-btn { width: 100%; padding: 15px; background: linear-gradient(135deg, #00A4DB 0%, #2F7DE1 100%); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 0.5px; font-family: 'Trade Gothic', 'Arial Black', sans-serif; }
+    .submit-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(0, 164, 219, 0.3); }
+    .leaderboard { background: white; border-radius: 12px; box-shadow: 0 5px 15px rgba(0, 164, 219, 0.1); overflow: hidden; border: 1px solid rgba(0, 164, 219, 0.1); }
+    .leaderboard h2 { background: linear-gradient(135deg, #00A4DB 0%, #2F7DE1 100%); color: white; padding: 20px; margin: 0; font-size: 1.5rem; font-weight: 600; font-family: 'Trade Gothic', 'Arial Black', sans-serif; text-transform: uppercase; letter-spacing: 0.5px; }
+    .leaderboard-content { max-height: 500px; overflow-y: auto; }
+    .swimmer-card { padding: 15px 20px; border-bottom: 1px solid #f3f4f6; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s ease; }
+    .swimmer-card:hover { background: linear-gradient(135deg, rgba(0, 164, 219, 0.05) 0%, rgba(47, 125, 225, 0.05) 100%); }
+    .swimmer-name { font-weight: 600; color: #1f2937; font-size: 1.1rem; }
+    .swimmer-rank { color: #6b7280; font-size: 0.9rem; margin-top: 2px; }
+    .swimmer-laps { font-size: 1.3rem; font-weight: 700; color: #00A4DB; }
+    .recent-entries { grid-column: 1 / -1; background: white; border-radius: 12px; box-shadow: 0 5px 15px rgba(0, 164, 219, 0.1); overflow: hidden; margin-top: 20px; border: 1px solid rgba(0, 164, 219, 0.1); }
+    .recent-entries h2 { background: linear-gradient(135deg, #00A4A9 0%, #2F7DE1 100%); color: white; padding: 20px; margin: 0; font-size: 1.5rem; font-weight: 600; font-family: 'Trade Gothic', 'Arial Black', sans-serif; text-transform: uppercase; letter-spacing: 0.5px; }
+    .entries-content { max-height: 300px; overflow-y: auto; }
+    .entry-item { padding: 12px 20px; border-bottom: 1px solid #f3f4f6; display: flex; justify-content: space-between; align-items: center; transition: background-color 0.2s ease; }
+    .entry-item:hover { background: #f9fafb; }
+    .empty-state { text-align: center; padding: 40px 20px; color: #6b7280; }
+    .success-message { background: #d1fae5; color: #065f46; padding: 12px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #a7f3d0; display: none; font-weight: 500; }
+    .save-status { position: fixed; bottom: 20px; right: 20px; background: rgba(0, 0, 0, 0.8); color: white; padding: 10px 20px; border-radius: 20px; font-size: 0.9rem; opacity: 0; transition: opacity 0.3s ease; }
+    .save-status.show { opacity: 1; }
+    .conn { font-size: 0.85rem; color:#374151; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="header-content">
+        <div class="jcc-logo">POZEZ JCC OF NORTHERN VIRGINIA</div>
+        <h1>🏊‍♀️ Community Lap Tracker</h1>
+        <p>J-Fit Aquatics Center • Monthly Swimming Challenge</p>
+      </div>
+    </div>
 
+    <div class="stats-bar">
+      <div class="stat-item">
+        <div class="stat-number" id="totalLapsCount">0</div>
+        <div class="stat-label">Total Laps</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number" id="totalSwimmersCount">0</div>
+        <div class="stat-label">Swimmers</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number" id="totalEntriesCount">0</div>
+        <div class="stat-label">Entries</div>
+      </div>
+    </div>
 
-const state = { swimmers:{}, entries:[], stats:null };
-function calcFromLocal() { const totalLaps = Object.values(state.swimmers).reduce((s,v)=>s+v,0); return { total_laps: totalLaps, total_swimmers: Object.keys(state.swimmers).length, total_entries: state.entries.length }; }
+    <div class="content">
+      <div class="form-section">
+        <h2>Log Your Laps</h2>
+        <div class="tools">
+          <button id="exportBtn" class="submit-btn" style="width:auto;padding:8px 12px;">Export JSON</button>
+          <input id="importFile" type="file" accept="application/json" style="display:none" />
+          <button id="importBtn" class="submit-btn" style="width:auto;padding:8px 12px;">Import JSON</button>
+        </div>
+        <div class="tools">
+          <input type="url" id="apiBaseInput" placeholder="API Base URL (e.g., https://your-api.up.railway.app)" />
+        </div>
+        <div class="tools"><small class="conn">Connection: <span id="connMode">Local</span></small></div>
+        <div class="success-message" id="successMessage">Laps logged successfully! Keep swimming! 🏊‍♂️</div>
+        <form id="lapForm" autocomplete="off">
+          <div class="form-group">
+            <label for="swimmerName">Swimmer Name:</label>
+            <input type="text" id="swimmerName" name="swimmerName" minlength="1" maxlength="80" required />
+          </div>
+          <div class="form-group">
+            <label for="lapsSwum">Laps Completed:</label>
+            <input type="number" id="lapsSwum" name="lapsSwum" min="1" max="10000" required />
+          </div>
+          <div class="form-group">
+            <label for="swimDate">Date:</label>
+            <input type="date" id="swimDate" name="swimDate" required />
+          </div>
+          <button type="submit" class="submit-btn">Log Laps</button>
+        </form>
+      </div>
 
+      <div class="leaderboard">
+        <h2>🏆 Top Swimmers</h2>
+        <div class="leaderboard-content" id="leaderboardContent">
+          <div class="empty-state"><p>No entries yet. Be the first to log your laps!</p></div>
+        </div>
+      </div>
 
-async function refresh() {
-const data = await client.load();
-if (client.isAPI) {
-state.stats = data.stats; state.entries = data.entries; state.swimmers = Object.fromEntries((data.swimmers||[]).map(s=>[s.swimmer_name, Number(s.total_laps)]));
-} else { state.swimmers = data.swimmers; state.entries = data.entries; state.stats = calcFromLocal(); }
-updateAllDisplays();
-}
+      <div class="recent-entries">
+        <h2>📋 Recent Activity</h2>
+        <div class="entries-content" id="recentEntriesContent">
+          <div class="empty-state"><p>No recent entries to display.</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
 
+  <div class="save-status" id="saveStatus">Saved</div>
 
-document.getElementById('swimDate').valueAsDate = new Date();
-document.getElementById('lapForm').addEventListener('submit', async function (e) {
-e.preventDefault();
-const name = document.getElementById('swimmerName').value.trim().slice(0,80);
-const laps = Number.parseInt(document.getElementById('lapsSwum').value, 10);
-const date = document.getElementById('swimDate').value;
-if (!name || Number.isNaN(laps) || laps < 1 || !date) { alert('Please fill in all fields correctly'); return; }
-try { await client.addEntry({ name, laps, date }); const successMsg = document.getElementById('successMessage'); successMsg.style.display = 'block'; setTimeout(() => { successMsg.style.display = 'none'; }, 3000); this.reset(); document.getElementById('swimDate').valueAsDate = new Date(); await refresh(); } catch (e) { alert(e.message || 'Failed to save'); }
-});
+  <script>
+    function escapeHTML(str) { return str.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;'); }
 
+    const qs = new URLSearchParams(location.search);
+    const LS_KEYS = { api: 'lap_api_base', admin: 'lap_admin_token', data: 'pozez_jcc_lap_tracker' };
 
-function updateAllDisplays() { updateStats(); updateLeaderboard(); updateRecentEntries(); reflectConn(); }
-function updateStats() { const s = state.stats || calcFromLocal(); document.getElementById('totalLapsCount').textContent = Number(s.total_laps||0).toLocaleString(); document.getElementById('totalSwimmersCount').textContent = Number(s.total_swimmers||0).toLocaleString(); document.getElementById('totalEntriesCount').textContent = Number(s.total_entries||0).toLocaleString(); }
+    function persistAPIBase(url) { localStorage.setItem(LS_KEYS.api, url || ''); }
+    function readAPIBase() { return qs.get('api') || localStorage.getItem(LS_KEYS.api) || ''; }
 
+    function showSaveStatus() { const s = document.getElementById('saveStatus'); s.classList.add('show'); setTimeout(()=>s.classList.remove('show'),1500); }
 
-function updateLeaderboard() {
-const el = document.getElementById('leaderboardContent');
-const entries = Object.entries(state.swimmers||{});
-if (!entries.length) { el.innerHTML = '<div class="empty-state"><p>No entries yet. Be the first to log your laps!</p></div>'; return; }
-const sorted = entries.sort(([,a],[,b])=>b-a).slice(0,15);
-el.innerHTML = sorted.map(([name, totalLaps], i) => {
-const medal = i===0?'🥇 ':i===1?'🥈 ':i===2?'🥉 ':'';
-return '<div class="swimmer-card">\n <div class="swimmer-info">\n <div class="swimmer-name">'+ medal + escapeHTML(name) +'</div>\n <div class="swimmer-rank">#'+ (i+1) +' Overall</div>\n </div>\n <div class="swimmer-laps">'+ Number(totalLaps).toLocaleString() +' laps</div>\n</div>';
-}).join('');
-}
+    class Client {
+      constructor(apiBase) { this.apiBase = apiBase; }
+      get isAPI() { return !!this.apiBase; }
 
+      async load() {
+        if (!this.isAPI) {
+          try { const raw = localStorage.getItem(LS_KEYS.data); if (!raw) return { swimmers: {}, entries: [] };
+            const parsed = JSON.parse(raw); return { swimmers: parsed.swimmers||{}, entries: parsed.entries||[] }; } catch { return { swimmers:{}, entries:[] }; }
+        }
+        const [stats, swimmers, entries] = await Promise.all([
+          fetch(this.apiBase + '/api/stats').then(r=>r.json()),
+          fetch(this.apiBase + '/api/swimmers').then(r=>r.json()),
+          fetch(this.apiBase + '/api/entries?limit=50').then(r=>r.json())
+        ]);
+        return { stats, swimmers, entries };
+      }
 
-function updateRecentEntries() {
-const el = document.getElementById('recentEntriesContent');
-if (!state.entries.length) { el.innerHTML = '<div class="empty-state"><p>No recent entries to display.</p></div>'; return; }
-const display = state.entries.slice(0,20);
-el.innerHTML = display.map((entry)=>{
-const formattedDate = new Date(entry.date || entry.created_at).toLocaleDateString();
-const ts = entry.timestamp || entry.created_at || new Date().toISOString();
-const timeAgo = getTimeAgo(ts);
-const nm = entry.name || entry.swimmer_name;
-return '<div class="entry-item">\n <div class="entry-info">\n <div class="entry-name">'+ escapeHTML(nm) +'</div>\n <div class="entry-date">'+ formattedDate +' • '+ timeAgo +'</div>\n </div>\n <div class="entry-laps">'+ Number(entry.laps) +' laps</div>\n</div>';
-}).join('');
-}
+      async addEntry({ name, laps, date }) {
+        if (!this.isAPI) {
+          const current = await this.load();
+          const swimmers = { ...(current.swimmers||{}) };
+          swimmers[name] = (swimmers[name]||0) + laps;
+          const entries = [ { name, laps, date, timestamp: new Date().toISOString() }, ...((current.entries)||[]) ].slice(0,50);
+          localStorage.setItem(LS_KEYS.data, JSON.stringify({ swimmers, entries, lastUpdated: new Date().toISOString() }));
+          showSaveStatus();
+          return { ok: true };
+        }
+        const res = await fetch(this.apiBase + '/api/entries/add', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ swimmer_name: name, laps, date }) });
+        if (!res.ok) throw new Error('Failed to save');
+        return res.json();
+      }
 
+      async exportJSON() {
+        if (!this.isAPI) {
+          const data = await this.load();
+          return { mode:'local', data: { entries: data.entries, swimmers: data.swimmers } };
+        }
+        const res = await fetch(this.apiBase + '/api/entries/export');
+        if (!res.ok) throw new Error('Export failed');
+        const entries = await res.json();
+        return { mode:'api', data:{ entries } };
+      }
 
-function getTimeAgo(ts) { const now = Date.now(); const t = new Date(ts).getTime(); const m = Math.floor((now - t)/60000); if (m < 1) return 'Just now'; if (m < 60) return m + 'm ago'; const h = Math.floor(m/60); if (h < 24) return h + 'h ago'; const d = Math.floor(h/24); return d + 'd ago'; }
+      async importJSON(payload, adminToken) {
+        if (!this.isAPI) {
+          try {
+            const swimmers = {};
+            const entries = (payload.entries||[]).slice(0,1000)
+              .map(e=>({ name: String(e.name||e.swimmer_name||'').slice(0,80), laps: Number(e.laps)||0, date: e.date, timestamp: e.timestamp || new Date().toISOString() }))
+              .filter(e=>e.name && e.laps>0 && e.date);
+            for (const e of entries) swimmers[e.name] = (swimmers[e.name]||0) + e.laps;
+            localStorage.setItem(LS_KEYS.data, JSON.stringify({ swimmers, entries, lastUpdated: new Date().toISOString() }));
+            showSaveStatus();
+            return { inserted: entries.length };
+          } catch { throw new Error('Invalid JSON'); }
+        }
+        const res = await fetch(this.apiBase + '/api/entries/bulk', { method:'POST', headers:{ 'Content-Type':'application/json', 'x-admin-token': adminToken||'' }, body: JSON.stringify({ entries: payload.entries||[] }) });
+        if (!res.ok) throw new Error('Import failed');
+        return res.json();
+      }
+    }
 
+    const apiBaseInput = document.getElementById('apiBaseInput');
+    const connMode = document.getElementById('connMode');
+    const client = new Client(readAPIBase());
 
-document.getElementById('exportBtn').addEventListener('click', async ()=>{ try { const { data } = await client.exportJSON(); const blob = new Blob([JSON.stringify(data, null, 2)], { type:'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'lap-tracker-export.json'; a.click(); URL.revokeObjectURL(a.href); } catch(e){ alert(e.message||'Export failed'); } });
+    function reflectConn() { apiBaseInput.value = client.apiBase; connMode.textContent = client.isAPI ? 'API (' + client.apiBase + ')' : 'Local'; }
 
+    apiBaseInput.addEventListener('change', () => { persistAPIBase(apiBaseInput.value.trim()); location.href = apiBaseInput.value ? ('?api=' + encodeURIComponent(apiBaseInput.value)) : location.pathname; });
 
-const importFile = document.getElementById('importFile');
-document.getElementById('importBtn').addEventListener('click', ()=> importFile.click());
-importFile.addEventListener('change', async ()=>{ const file = importFile.files[0]; if (!file) return; try { const text = await file.text(); const payload = JSON.parse(text); let adminToken = ''; if (client.isAPI) adminToken = prompt('Admin token (required for API import):', localStorage.getItem(LS_KEYS.admin)||'')||''; if (adminToken) localStorage.setItem(LS_KEYS.admin, adminToken); const res = await client.importJSON(payload, adminToken); alert('Imported: ' + (res.inserted || res.count || 'OK')); await refresh(); } catch(e){ alert(e.message||'Import failed'); } importFile.value = ''; });
+    const state = { swimmers:{}, entries:[], stats:null };
+    function calcFromLocal() { const totalLaps = Object.values(state.swimmers).reduce((s,v)=>s+v,0); return { total_laps: totalLaps, total_swimmers: Object.keys(state.swimmers).length, total_entries: state.entries.length }; }
 
+    async function refresh() {
+      const data = await client.load();
+      if (client.isAPI) {
+        state.stats = data.stats; state.entries = data.entries; state.swimmers = Object.fromEntries((data.swimmers||[]).map(s=>[s.swimmer_name, Number(s.total_laps)]));
+      } else { state.swimmers = data.swimmers; state.entries = data.entries; state.stats = calcFromLocal(); }
+      updateAllDisplays();
+    }
 
-document.addEventListener('DOMContentLoaded', async ()=>{ reflectConn(); await refresh(); });
-setInterval(async ()=>{ if (!client.isAPI) showSaveStatus(); }, 30000);
-</script>
+    document.getElementById('swimDate').valueAsDate = new Date();
+    document.getElementById('lapForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const name = document.getElementById('swimmerName').value.trim().slice(0,80);
+      const laps = Number.parseInt(document.getElementById('lapsSwum').value, 10);
+      const date = document.getElementById('swimDate').value;
+      if (!name || Number.isNaN(laps) || laps < 1 || !date) { alert('Please fill in all fields correctly'); return; }
+      try { await client.addEntry({ name, laps, date }); const successMsg = document.getElementById('successMessage'); successMsg.style.display = 'block'; setTimeout(() => { successMsg.style.display = 'none'; }, 3000); this.reset(); document.getElementById('swimDate').valueAsDate = new Date(); await refresh(); } catch (e) { alert(e.message || 'Failed to save'); }
+    });
+
+    function updateAllDisplays() { updateStats(); updateLeaderboard(); updateRecentEntries(); reflectConn(); }
+    function updateStats() { const s = state.stats || calcFromLocal(); document.getElementById('totalLapsCount').textContent = Number(s.total_laps||0).toLocaleString(); document.getElementById('totalSwimmersCount').textContent = Number(s.total_swimmers||0).toLocaleString(); document.getElementById('totalEntriesCount').textContent = Number(s.total_entries||0).toLocaleString(); }
+
+    function updateLeaderboard() {
+      const el = document.getElementById('leaderboardContent');
+      const entries = Object.entries(state.swimmers||{});
+      if (!entries.length) { el.innerHTML = '<div class="empty-state"><p>No entries yet. Be the first to log your laps!</p></div>'; return; }
+      const sorted = entries.sort(([,a],[,b])=>b-a).slice(0,15);
+      el.innerHTML = sorted.map(([name, totalLaps], i) => {
+        const medal = i===0?'🥇 ':i===1?'🥈 ':i===2?'🥉 ':'';
+        return '<div class="swimmer-card">\n  <div class="swimmer-info">\n    <div class="swimmer-name">'+ medal + escapeHTML(name) +'</div>\n    <div class="swimmer-rank">#'+ (i+1) +' Overall</div>\n  </div>\n  <div class="swimmer-laps">'+ Number(totalLaps).toLocaleString() +' laps</div>\n</div>';
+      }).join('');
+    }
+
+    function updateRecentEntries() {
+      const el = document.getElementById('recentEntriesContent');
+      if (!state.entries.length) { el.innerHTML = '<div class="empty-state"><p>No recent entries to display.</p></div>'; return; }
+      const display = state.entries.slice(0,20);
+      el.innerHTML = display.map((entry)=>{
+        const formattedDate = new Date(entry.date || entry.created_at).toLocaleDateString();
+        const ts = entry.timestamp || entry.created_at || new Date().toISOString();
+        const timeAgo = getTimeAgo(ts);
+        const nm = entry.name || entry.swimmer_name;
+        return '<div class="entry-item">\n  <div class="entry-info">\n    <div class="entry-name">'+ escapeHTML(nm) +'</div>\n    <div class="entry-date">'+ formattedDate +' • '+ timeAgo +'</div>\n  </div>\n  <div class="entry-laps">'+ Number(entry.laps) +' laps</div>\n</div>';
+      }).join('');
+    }
+
+    function getTimeAgo(ts) { const now = Date.now(); const t = new Date(ts).getTime(); const m = Math.floor((now - t)/60000); if (m < 1) return 'Just now'; if (m < 60) return m + 'm ago'; const h = Math.floor(m/60); if (h < 24) return h + 'h ago'; const d = Math.floor(h/24); return d + 'd ago'; }
+
+    document.getElementById('exportBtn').addEventListener('click', async ()=>{ try { const { data } = await client.exportJSON(); const blob = new Blob([JSON.stringify(data, null, 2)], { type:'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'lap-tracker-export.json'; a.click(); URL.revokeObjectURL(a.href); } catch(e){ alert(e.message||'Export failed'); } });
+
+    const importFile = document.getElementById('importFile');
+    document.getElementById('importBtn').addEventListener('click', ()=> importFile.click());
+    importFile.addEventListener('change', async ()=>{ const file = importFile.files[0]; if (!file) return; try { const text = await file.text(); const payload = JSON.parse(text); let adminToken = ''; if (client.isAPI) adminToken = prompt('Admin token (required for API import):', localStorage.getItem(LS_KEYS.admin)||'')||''; if (adminToken) localStorage.setItem(LS_KEYS.admin, adminToken); const res = await client.importJSON(payload, adminToken); alert('Imported: ' + (res.inserted || res.count || 'OK')); await refresh(); } catch(e){ alert(e.message||'Import failed'); } importFile.value = ''; });
+
+    document.addEventListener('DOMContentLoaded', async ()=>{ reflectConn(); await refresh(); });
+    setInterval(async ()=>{ if (!client.isAPI) showSaveStatus(); }, 30000);
+  </script>
 </body>
 </html>
