@@ -48,6 +48,9 @@
     .save-status { position: fixed; bottom: 20px; right: 20px; background: rgba(0, 0, 0, 0.8); color: white; padding: 10px 20px; border-radius: 20px; font-size: 0.9rem; opacity: 0; transition: opacity 0.3s ease; }
     .save-status.show { opacity: 1; }
     .conn { font-size: 0.85rem; color:#374151; }
+    /* hide admin tools unless admin=1 */
+body.admin-hidden .tools,
+body.admin-hidden .conn { display: none !important; }
   </style>
 </head>
 <body>
@@ -127,6 +130,8 @@
     function escapeHTML(str) { return str.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;'); }
 
     const qs = new URLSearchParams(location.search);
+    const isAdmin = qs.get('admin') === '1';
+    if (!isAdmin) document.body.classList.add('admin-hidden');
     const LS_KEYS = { api: 'lap_api_base', admin: 'lap_admin_token', data: 'pozez_jcc_lap_tracker' };
 
     function persistAPIBase(url) { localStorage.setItem(LS_KEYS.api, url || ''); }
